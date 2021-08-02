@@ -2,9 +2,11 @@ import pytest
 
 from rainbowcsv.__main__ import run
 
+
 @pytest.fixture
 def f(tmp_path):
     return tmp_path / 'f.csv'
+
 
 def test_run(f, capsys):
     f.write_text('a,b,c\n1,2,3')

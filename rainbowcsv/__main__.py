@@ -1,11 +1,12 @@
+import _csv
 import csv
-from pathlib import Path
 import sys
 import tempfile
-from typing import Dict, List, Union
+from pathlib import Path
+from typing import Dict, List
 
-from colorama import Fore, Back, Style
 import fire
+from colorama import Fore, Style
 
 colors = [
     Fore.RED,
@@ -13,8 +14,9 @@ colors = [
     Fore.YELLOW,
     Fore.BLUE,
     Fore.MAGENTA,
-    Fore.CYAN
+    Fore.CYAN,
 ]
+
 
 class CsvDetails:
     def __init__(self, path: str, delimiter: str, pretty: bool):
@@ -28,7 +30,7 @@ class CsvDetails:
         if self._col_lengths:
             return self._col_lengths
 
-        lengths = {}
+        lengths: Dict[int, int] = {}
         with open(self.path) as f:
             reader = csv.reader(f, delimiter=self.delimiter)
             for row in reader:
@@ -43,7 +45,12 @@ class CsvDetails:
     def last_col(self) -> int:
         return max(self.col_lengths.keys())
 
-def write_header(writer: csv.writer, row: List[str], details: CsvDetails) -> None:
+
+def write_header(
+    writer: _csv._writer,
+    row: List[str],
+    details: CsvDetails,
+) -> None:
     if not details.pretty:
         writer.writerow(row)
         print()  # new line
@@ -53,7 +60,10 @@ def write_header(writer: csv.writer, row: List[str], details: CsvDetails) -> Non
     for i, val in enumerate(row):
         spaces_to_add = details.col_lengths[i] - len(val)
         spaces_to_add += len(colors[i % len(colors)])
-        pretty_header.append(' ' + val + Style.RESET_ALL + (' ' * spaces_to_add) + ' ')
+        pretty_header.append(
+            ' ' + val + Style.RESET_ALL +
+            (' ' * spaces_to_add) + ' ',
+        )
 
     print('|', end='')
     writer.writerow(pretty_header)
@@ -76,16 +86,17 @@ def fmt_row(row: List[str], details: CsvDetails) -> List[str]:
             spaces_to_add += len(colors[i % len(colors)])
             if i == details.last_col:
                 spaces_to_add += len(Style.RESET_ALL)
-            pretty_row.append(' ' + val + Style.RESET_ALL + (' ' * spaces_to_add) + ' ')
+            pretty_row.append(
+                ' ' + val + Style.RESET_ALL +
+                (' ' * spaces_to_add) + ' ',
+            )
     else:
         pretty_row = row
     return pretty_row
 
+
 def rainbow_csv(details: CsvDetails) -> None:
-    if details.pretty:
-        out_delim = '|'
-    else:
-        out_delim = details.delimiter
+    out_delim = '|' if details.pretty else details.delimiter
 
     with open(details.path) as f:
         reader = csv.reader(f, delimiter=details.delimiter)
@@ -93,7 +104,7 @@ def rainbow_csv(details: CsvDetails) -> None:
             sys.stdout,
             delimiter=out_delim,
             quoting=csv.QUOTE_MINIMAL,
-            lineterminator=''
+            lineterminator='',
         )
         for i_r, row in enumerate(reader):
             out = []
@@ -115,20 +126,22 @@ def rainbow_csv(details: CsvDetails) -> None:
                     print()  # new line
 
 
-def run(path: str = '', delimiter: str=',', pretty: bool = False) -> None:
+def run(path: str = '', delimiter: str = ',', pretty: bool = False) -> None:
     if not path:
         tmp = tempfile.NamedTemporaryFile()
-        path = Path(tmp.name)
-        path.write_text(sys.stdin.read())
+        path = tmp.name
+        Path(path).write_text(sys.stdin.read())
 
     details = CsvDetails(path, delimiter, pretty)
     rainbow_csv(details)
 
+
 def main() -> None:
     try:
         fire.Fire(run)
-    except (BrokenPipeError, IOError):
+    except (BrokenPipeError, OSError):
         pass
+
 
 if __name__ == '__main__':
     main()
