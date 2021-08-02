@@ -1,9 +1,8 @@
-import _csv
 import csv
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import fire
 from colorama import Fore, Style
@@ -47,7 +46,7 @@ class CsvDetails:
 
 
 def write_header(
-    writer: _csv._writer,
+    writer: Any,
     row: List[str],
     details: CsvDetails,
 ) -> None:
@@ -56,43 +55,30 @@ def write_header(
         print()  # new line
         return
 
-    pretty_header = []
     for i, val in enumerate(row):
-        spaces_to_add = details.col_lengths[i] - len(val)
-        spaces_to_add += len(colors[i % len(colors)])
-        pretty_header.append(
-            ' ' + val + Style.RESET_ALL +
-            (' ' * spaces_to_add) + ' ',
-        )
+        n_spaces = details.col_lengths[i] - len(val)
+        n_spaces += len(colors[i % len(colors)])
+        row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
 
     print('|', end='')
-    writer.writerow(pretty_header)
+    writer.writerow(row)
     print('|')
 
     tilde_row = []
     print('|', end='')
     for i, length in details.col_lengths.items():
-        spaces_to_add = length
-        tilde_row.append(' ' + ('~' * spaces_to_add) + ' ')
+        tilde_row.append(' ' + ('~' * length) + ' ')
     writer.writerow(tilde_row)
     print('|')
 
 
 def fmt_row(row: List[str], details: CsvDetails) -> List[str]:
     if details.pretty:
-        pretty_row = []
         for i, val in enumerate(row):
-            spaces_to_add = details.col_lengths[i] - len(val)
-            spaces_to_add += len(colors[i % len(colors)])
-            if i == details.last_col:
-                spaces_to_add += len(Style.RESET_ALL)
-            pretty_row.append(
-                ' ' + val + Style.RESET_ALL +
-                (' ' * spaces_to_add) + ' ',
-            )
-    else:
-        pretty_row = row
-    return pretty_row
+            n_spaces = details.col_lengths[i] - len(val)
+            n_spaces += len(colors[i % len(colors)])
+            row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
+    return row
 
 
 def rainbow_csv(details: CsvDetails) -> None:
@@ -112,7 +98,6 @@ def rainbow_csv(details: CsvDetails) -> None:
                 out.append(f'{colors[i_c % len(colors)]}{col}')
 
             # clear the color at the end of each line
-            out[-1] = out[-1] + Style.RESET_ALL
             if i_r == 0:
                 write_header(writer, out, details)
             else:
@@ -126,13 +111,13 @@ def rainbow_csv(details: CsvDetails) -> None:
                     print()  # new line
 
 
-def run(path: str = '', delimiter: str = ',', pretty: bool = False) -> None:
-    if not path:
+def run(file: str = '', delimiter: str = ',', pretty: bool = False) -> None:
+    if not file:
         tmp = tempfile.NamedTemporaryFile()
-        path = tmp.name
-        Path(path).write_text(sys.stdin.read())
+        file = tmp.name
+        Path(file).write_text(sys.stdin.read())
 
-    details = CsvDetails(path, delimiter, pretty)
+    details = CsvDetails(file, delimiter, pretty)
     rainbow_csv(details)
 
 
