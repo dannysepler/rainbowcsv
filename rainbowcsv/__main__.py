@@ -1,9 +1,8 @@
-import _csv
 import csv
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import fire
 from colorama import Fore, Style
@@ -47,7 +46,7 @@ class CsvDetails:
 
 
 def write_header(
-    writer: _csv._writer,
+    writer: Any,
     row: List[str],
     details: CsvDetails,
 ) -> None:

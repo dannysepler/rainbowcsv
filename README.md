@@ -15,7 +15,7 @@ Use on a file
 
 or use with pipes
 
-`cat path/to/file.csv | rainbowcsv`
+`curl https://raw.githubusercontent.com/dannysepler/rainbowcsv/main/resources/movies.csv | rainbowcsv`
 
 ![Simple rainbowcsv output](https://raw.githubusercontent.com/dannysepler/rainbowcsv/main/resources/simple_screenshot.png)
 
