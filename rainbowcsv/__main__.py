@@ -1,4 +1,5 @@
 import csv
+from functools import lru_cache
 import sys
 import tempfile
 from pathlib import Path
@@ -22,63 +23,39 @@ class CsvDetails:
         self.path = Path(path)
         self.delimiter = delimiter
         self.pretty = pretty
-        self._col_lengths: Dict[int, int] = {}
 
     @property
-    def col_lengths(self) -> Dict[int, int]:
-        if self._col_lengths:
-            return self._col_lengths
-
-        lengths: Dict[int, int] = {}
+    @lru_cache()
+    def col_widths(self) -> Dict[int, int]:
+        widths: Dict[int, int] = {}
         with open(self.path) as f:
             reader = csv.reader(f, delimiter=self.delimiter)
             for row in reader:
                 for i, val in enumerate(row):
-                    col_len = len(val)
-                    if col_len > lengths.get(i, 0):
-                        lengths[i] = col_len
-        self._col_lengths = lengths
-        return lengths
-
-    @property
-    def last_col(self) -> int:
-        return max(self.col_lengths.keys())
+                    cur_max = widths.get(i, 0)
+                    widths[i] = max(widths.get(i, 0), len(val))
+        return widths
 
 
-def write_header(
+def pretty_row(
     writer: Any,
     row: List[str],
     details: CsvDetails,
 ) -> None:
-    if not details.pretty:
-        writer.writerow(row)
-        print()  # new line
-        return
-
     for i, val in enumerate(row):
-        n_spaces = details.col_lengths[i] - len(val)
+        n_spaces = details.col_widths[i] - len(val)
         n_spaces += len(colors[i % len(colors)])
         row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
 
-    print('|', end='')
-    writer.writerow(row)
-    print('|')
-
-    tilde_row = []
-    print('|', end='')
-    for i, length in details.col_lengths.items():
-        tilde_row.append(' ' + ('~' * length) + ' ')
-    writer.writerow(tilde_row)
-    print('|')
+    # insert '|' at start and end
+    writer.writerow([''] + row + [''])
 
 
-def fmt_row(row: List[str], details: CsvDetails) -> List[str]:
-    if details.pretty:
-        for i, val in enumerate(row):
-            n_spaces = details.col_lengths[i] - len(val)
-            n_spaces += len(colors[i % len(colors)])
-            row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
-    return row
+def pretty_tildes(writer: Any, details: CsvDetails) -> None:
+    row = [f" {'~' * width} " for width in details.col_widths.values()]
+
+    # insert '|' at start and end
+    writer.writerow([''] + row + [''])
 
 
 def rainbow_csv(details: CsvDetails) -> None:
@@ -90,25 +67,18 @@ def rainbow_csv(details: CsvDetails) -> None:
             sys.stdout,
             delimiter=out_delim,
             quoting=csv.QUOTE_MINIMAL,
-            lineterminator='',
         )
-        for i_r, row in enumerate(reader):
-            out = []
-            for i_c, col in enumerate(row):
-                out.append(f'{colors[i_c % len(colors)]}{col}')
+        for row_no, row in enumerate(reader):
+            for col_no, col in enumerate(row):
+                color = colors[col_no % len(colors)]
+                row[col_no] = color + col
 
-            # clear the color at the end of each line
-            if i_r == 0:
-                write_header(writer, out, details)
+            if details.pretty:
+                pretty_row(writer, row, details)
+                if row_no == 0:
+                    pretty_tildes(writer, details)
             else:
-                if details.pretty:
-                    print('|', end='')
-                out = fmt_row(out, details)
-                writer.writerow(out)
-                if details.pretty:
-                    print('|')
-                else:
-                    print()  # new line
+                writer.writerow(row)
 
 
 def run(file: str = '', delimiter: str = ',', pretty: bool = False) -> None:

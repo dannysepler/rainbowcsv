@@ -21,11 +21,11 @@ or use with pipes
 
 ## Options
 
-Append `--help` to show available arguments.
+`rainbowcsv --help`
 
 ## How it works
 
-`rainbowcsv` uses the colorama library to append color escape sequences around csv columns.
+`rainbowcsv` uses the colorama library to wrap csv columns with color escape sequences.
 
 ## Usage advice
 
