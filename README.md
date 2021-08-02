@@ -17,6 +17,8 @@ or use with pipes
 
 `cat path/to/file.csv | rainbowcsv`
 
+![Simple rainbowcsv output](https://raw.githubusercontent.com/dannysepler/rainbowcsv/main/resources/simple_screenshot.png)]
+
 ## Options
 
 Append `--help` to show available arguments.
@@ -30,3 +32,5 @@ Append `--help` to show available arguments.
 [csvkit](https://csvkit.readthedocs.io/en/latest/) is a lovely library, and we recommend using this in conjunction with it.
 
 The `csvlook` command doesn't play well with rainbow csv, because it doesn't know to ignore color-changing characters. That's why the `--pretty` option is available in `rainbowcsv`, it creates a similar-looking table.
+
+![Simple rainbowcsv output](https://raw.githubusercontent.com/dannysepler/rainbowcsv/main/resources/pretty_screenshot.png)]
