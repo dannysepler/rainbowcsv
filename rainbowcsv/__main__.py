@@ -30,12 +30,12 @@ class CsvDetails:
         self,
         path: str,
         delimiter: str,
-        pretty: bool,
+        table: bool,
         max_width: Optional[int],
     ):
         self.path = Path(path)
         self.delimiter = delimiter
-        self.pretty = pretty
+        self.table = table
         self.max_width = max_width
 
     @property  # type: ignore
@@ -54,7 +54,7 @@ class CsvDetails:
         return widths
 
 
-def pretty_row(
+def table_row(
     writer: Any,
     row: List[str],
     details: CsvDetails,
@@ -68,7 +68,7 @@ def pretty_row(
     writer.writerow([''] + row + [''])
 
 
-def pretty_tildes(writer: Any, details: CsvDetails) -> None:
+def table_tildes(writer: Any, details: CsvDetails) -> None:
     row = [f" {'~' * width} " for width in details.col_widths.values()]
 
     # insert '|' at start and end
@@ -76,7 +76,7 @@ def pretty_tildes(writer: Any, details: CsvDetails) -> None:
 
 
 def rainbow_csv(details: CsvDetails) -> None:
-    out_delim = '|' if details.pretty else details.delimiter
+    out_delim = '|' if details.table else details.delimiter
 
     with open(details.path) as f:
         reader = csv.reader(f, delimiter=details.delimiter)
@@ -95,10 +95,10 @@ def rainbow_csv(details: CsvDetails) -> None:
                     col += '…'  # special one-char ellipsis
                 row[col_no] = col
 
-            if details.pretty:
-                pretty_row(writer, row, details)
+            if details.table:
+                table_row(writer, row, details)
                 if row_no == 0:
-                    pretty_tildes(writer, details)
+                    table_tildes(writer, details)
             else:
                 writer.writerow(row)
 
@@ -109,7 +109,7 @@ def rainbow_csv(details: CsvDetails) -> None:
 def run(
     file: str = '',
     delimiter: str = ',',
-    pretty: bool = False,
+    table: bool = False,
     max_width: Optional[int] = None,
 ) -> None:
     if not file:
@@ -117,14 +117,17 @@ def run(
         file = tmp.name
         Path(file).write_text(sys.stdin.read())
 
-    details = CsvDetails(file, delimiter, pretty, max_width)
+    details = CsvDetails(file, delimiter, table, max_width)
     rainbow_csv(details)
 
 
 def main() -> None:
     try:
         fire.Fire(run)
-    except (BrokenPipeError, OSError):
+    except FileNotFoundError:
+        sys.tracebacklimit = 0  # keep error easy-to-read
+        raise
+    except (BrokenPipeError, OSError) as e:
         pass
 
 

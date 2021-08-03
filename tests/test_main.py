@@ -40,9 +40,9 @@ def test_run_contents(f, capsys):
     ]
 
 
-def test_pretty(f, capsys):
+def test_table(f, capsys):
     f.write_text('a,b,c\n1,2,3')
-    run(str(f), pretty=True)
+    run(str(f), table=True)
 
     lines = out_lines(capsys)
     assert len(lines) == 3  # adds tilde line
@@ -50,9 +50,9 @@ def test_pretty(f, capsys):
         assert len(line.split('|')) == 3 + 2
 
 
-def test_pretty_contents(f, capsys):
+def test_table_contents(f, capsys):
     f.write_text('a,b,c\n1,2,3')
-    run(str(f), pretty=True)
+    run(str(f), table=True)
 
     assert out_lines(capsys) == [
         f'| {C[0]}a{RESET} | {C[1]}b{RESET} | {C[2]}c{RESET} |',
@@ -61,9 +61,9 @@ def test_pretty_contents(f, capsys):
     ]
 
 
-def test_pretty_contents_on_different_col_lengths(f, capsys):
+def test_table_contents_on_different_col_lengths(f, capsys):
     f.write_text('a,b,ccc\n11,2,3')
-    run(str(f), pretty=True)
+    run(str(f), table=True)
 
     assert out_lines(capsys) == [
         # note the spaces after each header
@@ -77,7 +77,7 @@ def test_pretty_contents_on_different_col_lengths(f, capsys):
 
 def test_using_incorrect_delim_on_non_comma_out(f, capsys):
     f.write_text('a&b&c\n1&2&3')
-    run(str(f), pretty=True)
+    run(str(f), table=True)
 
     for line in out_lines(capsys):
         assert len(line.split('|')) == 1 + 2
@@ -85,7 +85,7 @@ def test_using_incorrect_delim_on_non_comma_out(f, capsys):
 
 def test_using_proper_delim_on_non_comma_out(f, capsys):
     f.write_text('a&b&c\n1&2&3')
-    run(str(f), pretty=True, delimiter='&')
+    run(str(f), table=True, delimiter='&')
 
     for line in out_lines(capsys):
         assert len(line.split('|')) == 3 + 2
@@ -93,7 +93,7 @@ def test_using_proper_delim_on_non_comma_out(f, capsys):
 
 def test_long_entry_is_truncated(f, capsys):
     f.write_text('entry\na really really really long entry')
-    run(str(f), pretty=True, max_width=10)
+    run(str(f), table=True, max_width=10)
 
     assert out_lines(capsys) == [
         f'| {C[0]}entry{RESET}      |',
@@ -105,7 +105,7 @@ def test_long_entry_is_truncated(f, capsys):
 def test_long_entry_is_not_truncated_when_no_max(f, capsys):
     entry = 'a really really really long entry'
     f.write_text(f'entry\n{entry}')
-    run(str(f), pretty=True)
+    run(str(f), table=True)
 
     assert out_lines(capsys) == [
         f'| {C[0]}entry{RESET}                             |',
@@ -114,7 +114,7 @@ def test_long_entry_is_not_truncated_when_no_max(f, capsys):
     ]
 
 
-def test_long_entry_is_truncated_when_not_pretty(f, capsys):
+def test_long_entry_is_truncated_when_not_table(f, capsys):
     f.write_text('entry\na really really really long entry')
     run(str(f), max_width=10)
 
