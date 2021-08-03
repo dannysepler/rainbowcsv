@@ -1,12 +1,19 @@
 import csv
-from functools import lru_cache
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar
 
 import fire
 from colorama import Fore, Style
+
+if TYPE_CHECKING:
+    # https://github.com/python/mypy/issues/5107#issuecomment-529372406
+    F = TypeVar('F')
+    def lru_cache() -> F: pass
+else:
+    from functools import lru_cache
+
 
 colors = [
     Fore.RED,
@@ -19,21 +26,30 @@ colors = [
 
 
 class CsvDetails:
-    def __init__(self, path: str, delimiter: str, pretty: bool):
+    def __init__(
+        self,
+        path: str,
+        delimiter: str,
+        pretty: bool,
+        max_width: Optional[int],
+    ):
         self.path = Path(path)
         self.delimiter = delimiter
         self.pretty = pretty
+        self.max_width = max_width
 
-    @property
+    @property  # type: ignore
     @lru_cache()
-    def col_widths(self) -> Dict[int, int]:
+    def col_widths(self) -> Any:
         widths: Dict[int, int] = {}
         with open(self.path) as f:
             reader = csv.reader(f, delimiter=self.delimiter)
             for row in reader:
                 for i, val in enumerate(row):
-                    cur_max = widths.get(i, 0)
-                    widths[i] = max(widths.get(i, 0), len(val))
+                    width = max(widths.get(i, 0), len(val))
+                    if self.max_width and self.max_width < width:
+                        width = self.max_width
+                    widths[i] = width
         return widths
 
 
@@ -43,8 +59,11 @@ def pretty_row(
     details: CsvDetails,
 ) -> None:
     for i, val in enumerate(row):
-        n_spaces = details.col_widths[i] - len(val)
-        n_spaces += len(colors[i % len(colors)])
+        len_color = len(colors[i % len(colors)])
+        if details.max_width and len(val) > details.max_width:
+            val = val[:details.max_width + len_color - 1]
+            val += '…'  # special one-char ellipsis
+        n_spaces = details.col_widths[i] - len(val) + len_color
         row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
 
     # insert '|' at start and end
@@ -81,13 +100,18 @@ def rainbow_csv(details: CsvDetails) -> None:
                 writer.writerow(row)
 
 
-def run(file: str = '', delimiter: str = ',', pretty: bool = False) -> None:
+def run(
+    file: str = '',
+    delimiter: str = ',',
+    pretty: bool = False,
+    max_width: Optional[int] = None,
+) -> None:
     if not file:
         tmp = tempfile.NamedTemporaryFile()
         file = tmp.name
         Path(file).write_text(sys.stdin.read())
 
-    details = CsvDetails(file, delimiter, pretty)
+    details = CsvDetails(file, delimiter, pretty, max_width)
     rainbow_csv(details)
 
 
