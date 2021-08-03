@@ -90,7 +90,7 @@ def test_using_proper_delim_on_non_comma_out(f, capsys):
 
 def test_long_entry_is_truncated(f, capsys):
     f.write_text('entry\na really really really long entry')
-    run(str(f), pretty=True, delimiter='&', max_width=10)
+    run(str(f), pretty=True, max_width=10)
 
     assert out_lines(capsys) == [
         f'| {C[0]}entry{RESET}      |',
@@ -102,10 +102,20 @@ def test_long_entry_is_truncated(f, capsys):
 def test_long_entry_is_not_truncated_when_no_max(f, capsys):
     entry = 'a really really really long entry'
     f.write_text(f'entry\n{entry}')
-    run(str(f), pretty=True, delimiter='&')
+    run(str(f), pretty=True)
 
     assert out_lines(capsys) == [
         f'| {C[0]}entry{RESET}                             |',
         f"| {'~' * len(entry)} |",
         f'| {C[0]}a really really really long entry{RESET} |',
+    ]
+
+
+def test_long_entry_is_truncated_when_not_pretty(f, capsys):
+    f.write_text('entry\na really really really long entry')
+    run(str(f), max_width=10)
+
+    assert out_lines(capsys) == [
+        f'{C[0]}entry',
+        f'{C[0]}a really …',
     ]

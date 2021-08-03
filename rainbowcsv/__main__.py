@@ -60,9 +60,6 @@ def pretty_row(
 ) -> None:
     for i, val in enumerate(row):
         len_color = len(colors[i % len(colors)])
-        if details.max_width and len(val) > details.max_width:
-            val = val[:details.max_width + len_color - 1]
-            val += '…'  # special one-char ellipsis
         n_spaces = details.col_widths[i] - len(val) + len_color
         row[i] = ' ' + val + Style.RESET_ALL + (' ' * n_spaces) + ' '
 
@@ -90,7 +87,12 @@ def rainbow_csv(details: CsvDetails) -> None:
         for row_no, row in enumerate(reader):
             for col_no, col in enumerate(row):
                 color = colors[col_no % len(colors)]
-                row[col_no] = color + col
+                col = color + col
+
+                if details.max_width and len(col) > details.max_width:
+                    col = col[:details.max_width + len(color) - 1]
+                    col += '…'  # special one-char ellipsis
+                row[col_no] = col
 
             if details.pretty:
                 pretty_row(writer, row, details)
