@@ -14,7 +14,10 @@ def f(tmp_path):
 
 def out_lines(capsys):
     captured = capsys.readouterr()
-    return captured.out.splitlines()
+    lines = captured.out.splitlines()
+    # should end by resetting color back to white
+    assert lines[-1] == RESET
+    return lines[:-1]
 
 
 def test_run(f, capsys):

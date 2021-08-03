@@ -46,10 +46,11 @@ class CsvDetails:
             reader = csv.reader(f, delimiter=self.delimiter)
             for row in reader:
                 for i, val in enumerate(row):
-                    width = max(widths.get(i, 0), len(val))
-                    if self.max_width and self.max_width < width:
-                        width = self.max_width
-                    widths[i] = width
+                    widths[i] = max(widths.get(i, 0), len(val))
+
+        for i, width in widths.items():
+            if self.max_width and self.max_width < width:
+                widths[i] = self.max_width
         return widths
 
 
@@ -100,6 +101,9 @@ def rainbow_csv(details: CsvDetails) -> None:
                     pretty_tildes(writer, details)
             else:
                 writer.writerow(row)
+
+    # reset color at end, helps for the next prompt
+    print(Style.RESET_ALL, end='')
 
 
 def run(
