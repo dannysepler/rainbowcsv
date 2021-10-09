@@ -127,7 +127,7 @@ def main() -> None:
     except FileNotFoundError:
         sys.tracebacklimit = 0  # keep error easy-to-read
         raise
-    except (BrokenPipeError, OSError) as e:
+    except (BrokenPipeError, OSError):
         pass
 
 
